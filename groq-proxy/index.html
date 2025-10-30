@@ -1,10 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Groq Proxy</title>
+  <style>
+    body {font-family: system-ui, sans-serif; padding: 2rem; background:#0d0d0d; color:#eee;}
+    pre {background:#1a1a1a; padding:1rem; border-radius:6px; overflow:auto;}
+  </style>
 </head>
 <body>
+  <h1>Groq Proxy Active</h1>
+  <p>Open the bookmarklet on any page and it will use this endpoint.</p>
+
+  <button id="testBtn">Test Proxy (say “Hello”) </button>
+  <pre id="output">Result will appear here…</pre>
+
+  <!-- The real proxy logic -->
   <script src="proxy.js"></script>
 </body>
 </html>
