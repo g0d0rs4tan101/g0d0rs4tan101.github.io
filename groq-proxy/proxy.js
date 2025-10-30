@@ -1,5 +1,9 @@
 /* ==== proxy.js ==== */
 const GROQ_API_KEY = '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';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+// Use AllOrigins to bypass firewall
+const ALLORIGINS = 'https://api.allorigins.win/raw?url=';
 
 window.groqProxy = async function (messages, opts = {}) {
   const payload = {
@@ -10,35 +14,42 @@ window.groqProxy = async function (messages, opts = {}) {
     top_p: opts.top_p ?? 0.4,
   };
 
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${GROQ_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+  const encodedUrl = encodeURIComponent(GROQ_URL);
+  const proxyUrl = `${ALLORIGINS}${encodedUrl}`;
 
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`Groq ${res.status}: ${txt}`);
+  try {
+    const res = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Groq ${res.status}: ${txt.substring(0, 200)}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error('groqProxy error:', err);
+    throw err;
   }
-  return await res.json();
 };
 
-/* ---- Tell the parent we are ready ---- */
+// Ready signal
 window.addEventListener('load', () => {
-  // Send ready signal to any parent (bookmarklet iframe)
   if (window.parent && window.parent !== window) {
     window.parent.postMessage({type: 'proxy-ready'}, '*');
   }
 });
 
-/* ---- Listen for requests from the bookmarklet ---- */
+// Listen for request
 window.addEventListener('message', async ev => {
-  // Allow any origin from the same github.io domain
-  const proxyOrigin = new URL(location.href).origin;
-  if (ev.origin !== proxyOrigin) return;
+  const origin = new URL(location.href).origin;
+  if (ev.origin !== origin) return;
 
   if (ev.data?.type === 'groq-request') {
     try {
@@ -50,14 +61,14 @@ window.addEventListener('message', async ev => {
   }
 });
 
-/* ---- Optional UI test ---- */
+// Test button
 document.getElementById('testBtn')?.addEventListener('click', async () => {
   const out = document.getElementById('output');
-  out.textContent = 'Loading…';
+  out.textContent = 'Sending via AllOrigins...';
   try {
-    const data = await window.groqProxy([{role:'user',content:'Hello from proxy!'}]);
+    const data = await window.groqProxy([{role:'user',content:'Hi from proxy!'}]);
     out.textContent = JSON.stringify(data, null, 2);
   } catch (e) {
-    out.textContent = `Error: ${e.message}`;
+    out.textContent = `Failed: ${e.message}`;
   }
 });
